@@ -8,6 +8,7 @@ import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -21,21 +22,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
+    public static void main(String[] args) throws Exception {
         //CSV-JSON
         String[] columnMapping = {"id", "firstName", "lastName", "country", "age"};
-        String CsvFileName = "data.csv";
-        List<Employee> list = parseCSV(columnMapping, CsvFileName);
-        String CsvJson = listToJson(list);
-        String CsvJsonFile = "data.json";
-        writeString(CsvJson, CsvJsonFile);
+        String csvFileName = "data.csv";
+        List<Employee> list = parseCSV(columnMapping, csvFileName);
+        String csvJson = listToJson(list);
+        String csvJsonFile = "data.json";
+        writeString(csvJson, csvJsonFile);
 
         //XML-JSON
-        String XmlFileName = "data.xml";
-        List<Employee> list2 = parseXML(XmlFileName);
-        String XmlJson = listToJson(list2);
-        String XmlJsonFile = "data2.json";
-        writeString(XmlJson, XmlJsonFile);
+        String xmlFileName = "data.xml";
+        List<Employee> list2 = parseXML(xmlFileName);
+        String xmlJson = listToJson(list2);
+        String xmlJsonFile = "data2.json";
+        writeString(xmlJson, xmlJsonFile);
 
 
     }
@@ -70,34 +71,32 @@ public class Main {
         }
     }
 
-    private static List<Employee> parseXML(String xmlFile) throws ParserConfigurationException, IOException, SAXException {
-        List<String> elements = new ArrayList<>();
+    private static List<Employee> parseXML(String xmlFile) throws Exception {
         List<Employee> employeeList = new ArrayList<>();
+
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         Document document = documentBuilder.parse(new File(xmlFile));
-        Node root = document.getDocumentElement();
-        NodeList nodeList = root.getChildNodes();
+        document.getDocumentElement().normalize();
+        NodeList nodeList = document.getElementsByTagName("employee");
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
-            if (node.getNodeName().equals("employee")) {
-                NodeList nodeList1 = node.getChildNodes();
-                for (int j = 0; j < nodeList1.getLength(); j++) {
-                    Node node_ = nodeList1.item(j);
-                    if (Node.ELEMENT_NODE == node_.getNodeType()) {
-                        elements.add(node_.getTextContent());
-                    }
-                }
-                employeeList.add(new Employee(
-                        Long.parseLong(elements.get(0)),
-                        elements.get(1),
-                        elements.get(2),
-                        elements.get(3),
-                        Integer.parseInt(elements.get(4))));
-                elements.clear();
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+
+                Element eElement = (Element) node;
+                Employee employee = new Employee();
+
+                employee.setId(Integer.parseInt(eElement.getElementsByTagName("id").item(0).getTextContent()));
+                employee.setFirstName(eElement.getElementsByTagName("firstName").item(0).getTextContent());
+                employee.setLastName(eElement.getElementsByTagName("lastName").item(0).getTextContent());
+                employee.setCountry(eElement.getElementsByTagName("country").item(0).getTextContent());
+                employee.setAge(Integer.parseInt(eElement.getElementsByTagName("age").item(0).getTextContent()));
+
+                employeeList.add(employee);
             }
         }
         return employeeList;
     }
+
 
 }
